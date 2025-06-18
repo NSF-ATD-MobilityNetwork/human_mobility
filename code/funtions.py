@@ -11,7 +11,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import make_pipeline
-
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import geopandas as gpd
+from matplotlib_scalebar.scalebar import ScaleBar
 
 
 def create_dfs(weekly_patterns_folder):
@@ -407,3 +409,30 @@ def plot_observed_vs_predicted(df, features, target, ax, label='', color='b', al
             fontsize=10, verticalalignment='bottom', horizontalalignment='left',
             bbox=dict(boxstyle='round,pad=0.5', edgecolor='gray', facecolor='white'))
     return None
+
+def plot_cloropleth(gdf, attribute, axis, scalebar=True, cmap=plt.cm.viridis_r):
+    bad_color = 'white'
+    cmap.set_bad(color=bad_color)  
+    gdf.boundary.plot(ax=axis, linewidth=.1, color='grey')
+    gdf.plot(column=attribute, cmap=cmap, legend=True, ax=axis,
+                    missing_kwds={'color': bad_color, 'label': '0'}, vmin=None, vmax=None,
+                    legend_kwds={'orientation': "vertical", 'label':attribute, 'shrink':0.6})
+    axis.set_xticks([])
+    axis.set_yticks([])
+    if scalebar==True:
+        bar = ScaleBar(1, location='lower right', units='m', length_fraction=0.1)  # 1 unit in data coordinates = 1 pixel
+        axis.add_artist(bar)
+    return
+
+def get_gdf(attribute_df, shapefiles, omit_tracts):
+    df = attribute_df
+    df.rename(columns={'Tract': 'TRACTCE'}, inplace=True)
+    gdf = gpd.read_file('../data/shape_files')
+    gdf = gdf[gdf['COUNTYFP'] == '201']
+    gdf = gdf.to_crs(epsg=3395)
+    gdf['TRACTCE'] = gdf['TRACTCE'].astype(str)
+    df['TRACTCE'] = df['TRACTCE'].astype(str)
+    merged = pd.merge(gdf, df, how='left', on='TRACTCE')
+    merged = merged[~merged['TRACTCE'].isin(omit_tracts)]
+    return merged
+
