@@ -15,4 +15,4 @@ Jupyter notebooks for processing SafeGraph data into multilayer networks to anal
 SafeGraph data not included due to license restrictions. You can request access [here](https://www.safegraph.com).
 
 ## Contact
-butlerm0405@gmail.com
+mbutle15@uwyo.edu
